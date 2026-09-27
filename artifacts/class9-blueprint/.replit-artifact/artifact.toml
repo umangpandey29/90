@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Class 9 90-Day Blueprint"
+description = "A responsive interactive study journey for Class 9 students to follow the source 90-day syllabus, track completion, rate Base/Mid/Peak performance, capture notes, review weak areas, and measure exam readiness."
+version = "1.0.0"
+id = "artifacts/class9-blueprint"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19090
+
+[services.development]
+run = "pnpm --filter @workspace/class9-blueprint run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/class9-blueprint", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/class9-blueprint/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19090"
+BASE_PATH = "/"

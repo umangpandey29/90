@@ -1,0 +1,1397 @@
+BUILD A FULLY FUNCTIONAL INTERACTIVE WEBSITE FROM THE ATTACHED PDF
+
+1. PROJECT OVERVIEW
+
+Build a complete, production-quality, responsive web application based on the attached PDF: "CLASS 9: 90-DAY STRATEGIC BLUEPRINT".
+
+The PDF is the single source of truth for the study-plan content.
+
+I do NOT want a simple PDF viewer, PDF-to-HTML conversion, screenshot recreation, or static table.
+
+I want the PDF transformed into a fully interactive 90-day student preparation tracker website.
+
+The website should preserve the study plan, terminology, day-by-day structure, subjects, chapters/topics, targets, milestones, and Base/Mid/Peak performance system from the PDF while adding the functionality required to make it behave like a real digital tracker.
+
+The result should feel like a polished modern productivity/study application.
+
+Think:
+
+Study Planner + Productivity Dashboard + 90-Day Journey Tracker
+
+NOT:
+
+A PDF displayed inside a browser.
+
+---
+
+2. IMPORTANT SOURCE-OF-TRUTH RULE
+
+The attached PDF contains the actual 90-day curriculum and study plan.
+
+Before building the application:
+
+1. Read and analyze the entire PDF.
+2. Extract all available:
+   - Days
+   - Dates
+   - Months
+   - Subjects
+   - Chapters
+   - Topics
+   - Target/action plans
+   - Monthly milestones
+   - Performance system
+   - Final readiness checklist
+3. Store this information as structured application data.
+4. Do NOT manually invent different chapter names, dates, targets, or study tasks.
+5. Do NOT replace the PDF's study plan with a generic Class 9 curriculum.
+6. Preserve the PDF's terminology wherever possible.
+7. If something is unclear or not present in the PDF, do not silently invent it.
+
+The PDF should remain the authoritative source for the actual study content.
+
+The website functionality is allowed to expand around the content, but the underlying study-plan content must remain faithful to the PDF.
+
+---
+
+3. CORE OBJECTIVE
+
+Convert this:
+
+STATIC PDF
+
+into this:
+
+INTERACTIVE DIGITAL STUDY SYSTEM
+
+The student should be able to:
+
+- See today's task
+- Browse all 90 days
+- Open any individual day
+- Mark a day/task as completed
+- Rate their performance as Base / Mid / Peak
+- Add personal notes
+- Track progress
+- View subject-wise progress
+- See completed and incomplete days
+- Identify weak/Base topics
+- Revisit weak topics
+- Track monthly milestones
+- See overall 90-day progress
+- Complete the final readiness checklist
+- Continue using the website without losing their data
+
+All interactions must actually work.
+
+Do not create fake buttons or decorative controls.
+
+---
+
+4. DESIGN DIRECTION
+
+Create a premium, modern, highly polished study-productivity interface.
+
+It should feel like a real application that could be used every day.
+
+Avoid the appearance of:
+
+- A school PDF
+- A boring spreadsheet
+- A generic admin dashboard
+- A template website
+- A basic CRUD application
+
+The design should communicate:
+
+Focus + Progress + Discipline + Achievement
+
+Use:
+
+- Strong typography
+- Excellent spacing
+- Clean hierarchy
+- Modern cards
+- Subtle borders
+- Progress indicators
+- Smooth micro-interactions
+- Carefully controlled animations
+- Responsive layouts
+- Excellent mobile usability
+
+The interface should feel premium without becoming visually complicated.
+
+---
+
+5. MOBILE-FIRST REQUIREMENT
+
+The website must be designed mobile-first.
+
+Most students will use it from a phone.
+
+It must work beautifully on:
+
+- Mobile
+- Tablet
+- Laptop
+- Desktop
+
+Do not simply shrink the desktop interface onto mobile.
+
+Create proper mobile layouts.
+
+On mobile:
+
+- Navigation should become compact
+- Cards should stack naturally
+- Tables should transform into cards where appropriate
+- Buttons must be touch-friendly
+- Text must remain readable
+- Progress indicators must remain clear
+- No horizontal scrolling unless absolutely necessary
+
+---
+
+6. APP STRUCTURE
+
+Create the following major sections/pages:
+
+1. Dashboard
+2. 90-Day Journey
+3. Today's Plan
+4. Calendar
+5. Subjects
+6. Weak Areas
+7. Progress / Analytics
+8. Final Readiness
+9. Settings
+
+You may combine closely related views if that produces a better UX, but all functionality must remain available.
+
+---
+
+7. DASHBOARD
+
+The Dashboard is the main home screen.
+
+It should immediately answer:
+
+Where am I?
+
+What should I do today?
+
+How much have I completed?
+
+What do I need to improve?
+
+Example structure:
+
+---
+
+CLASS 9
+
+90-DAY BLUEPRINT
+
+Day 47 / 90
+
+████████████████░░░░
+
+52% COMPLETE
+
+---
+
+TODAY'S MISSION
+
+DAY 47 · NOVEMBER 16
+
+MATHEMATICS
+
+Heron's Formula
+
+[chapter/topic from PDF]
+
+Today's Target:
+
+[exact target/action plan from PDF]
+
+[ OPEN TODAY ]
+
+---
+
+YOUR PERFORMANCE
+
+BASE      MID      PEAK
+
+8          17       22
+
+---
+
+SUBJECT PROGRESS
+
+MATHEMATICS
+████████████░░ 72%
+
+SCIENCE
+██████████░░░░ 58%
+
+SOCIAL SCIENCE
+████████░░░░░░ 44%
+
+---
+
+WEAK AREAS
+
+8 topics need revision
+
+[ VIEW WEAK AREAS ]
+
+---
+
+Do not hardcode these example numbers.
+
+They must be calculated dynamically from the user's actual data.
+
+---
+
+8. TODAY'S PLAN
+
+Create a dedicated "Today's Plan" experience.
+
+It should automatically determine the relevant day based on the user's selected/current date and the configured 90-day plan.
+
+Display:
+
+- Day number
+- Date
+- Month
+- Subject
+- Chapter/topic
+- Target/action plan
+- Completion status
+- Performance rating
+- Personal notes
+
+Example:
+
+DAY 25
+
+OCTOBER 25
+
+MATHEMATICS
+
+CHAPTER 5:
+Triangles – Congruence Criteria
+
+TARGET:
+
+SAS, ASA, AAS, SSS, RHS
+theorems & proofs
+
+PERFORMANCE
+
+[ BASE ]
+[ MID ]
+[ PEAK ]
+
+STATUS
+
+[ MARK COMPLETE ]
+
+PERSONAL NOTES
+
+[ Write something... ]
+
+SAVE
+
+Every interaction must persist.
+
+---
+
+9. 90-DAY JOURNEY
+
+Create a visually engaging 90-day journey.
+
+Show all 90 days.
+
+Organize them into:
+
+PHASE 1
+
+OCTOBER
+
+PHASE 2
+
+NOVEMBER
+
+PHASE 3
+
+DECEMBER
+
+Each day should have a visual status.
+
+Use states such as:
+
+- Not started
+- In progress
+- Completed
+- Base
+- Mid
+- Peak
+
+Do not overload the interface with too many colors.
+
+Use a sophisticated visual system.
+
+Clicking a day should open that day's detailed study card/page.
+
+---
+
+10. DAY CARD
+
+Every day should have a detailed interactive view.
+
+Display:
+
+DAY XX
+
+DATE
+
+SUBJECT
+
+CHAPTER / TOPIC
+
+TARGET & ACTION PLAN
+
+---
+
+STATUS
+
+Not Started
+In Progress
+Completed
+
+---
+
+PERFORMANCE
+
+BASE
+MID
+PEAK
+
+---
+
+NOTES
+
+[textarea]
+
+---
+
+ACTIONS
+
+[ SAVE ]
+
+[ MARK COMPLETE ]
+
+[ RESET ]
+
+The student's performance selection and notes must persist.
+
+---
+
+11. BASE / MID / PEAK SYSTEM
+
+The PDF defines the performance system as:
+
+BASE:
+Weak understanding, requires urgent re-revision.
+
+MID:
+Moderate clarity, requires problem solving.
+
+PEAK:
+Full mastery and exam readiness.
+
+Implement this exactly as the core performance-rating system.
+
+The user must be able to select one of:
+
+BASE
+MID
+PEAK
+
+Once selected:
+
+- Save the rating
+- Display it on the relevant day
+- Include it in analytics
+- Include it in weak-area calculations
+
+If a day is rated BASE, automatically classify it as a weak area.
+
+If it is MID, classify it as developing.
+
+If it is PEAK, classify it as mastered.
+
+Do not automatically change the user's rating.
+
+---
+
+12. WEAK AREAS SYSTEM
+
+Create a dedicated Weak Areas page.
+
+Automatically identify all days/topics rated:
+
+BASE
+
+Display:
+
+WEAK AREAS
+
+Number of Base-rated topics
+
+Then group them by subject.
+
+Example:
+
+MATHEMATICS
+
+• Topic A
+• Topic B
+
+SCIENCE
+
+• Topic C
+• Topic D
+
+SOCIAL SCIENCE
+
+• Topic E
+
+Each item should be clickable.
+
+Clicking it opens the original day's study information.
+
+Include:
+
+[ MARK AS REVISED ]
+
+However, do NOT erase the original Base rating unless the user deliberately changes their performance rating.
+
+A topic can remain Base while being marked as revised.
+
+---
+
+13. REVISION TRACKING
+
+Each day should support revision tracking.
+
+Example:
+
+Original Performance:
+
+BASE
+
+Revision:
+
+☐ Revision 1 completed
+☐ Revision 2 completed
+
+The revision system should be optional and lightweight.
+
+It should never overwrite the original study data.
+
+---
+
+14. SUBJECT DASHBOARD
+
+Create separate subject views for:
+
+- Mathematics
+- Science
+- Social Science
+- English / Language where applicable in the PDF
+
+Each subject should show:
+
+Total planned days
+
+Completed days
+
+Remaining days
+
+Progress percentage
+
+Base topics
+
+Mid topics
+
+Peak topics
+
+Upcoming topics
+
+Completed topics
+
+Example:
+
+MATHEMATICS
+
+████████████░░░
+
+68% COMPLETE
+
+Completed: 18
+Remaining: 9
+
+BASE: 3
+MID: 7
+PEAK: 8
+
+[ VIEW MATHEMATICS PLAN ]
+
+---
+
+15. PROGRESS ANALYTICS
+
+Create a visual analytics page.
+
+Show:
+
+OVERALL PROGRESS
+
+Completed Days / 90
+
+Percentage
+
+Progress bar
+
+PERFORMANCE DISTRIBUTION
+
+BASE
+MID
+PEAK
+
+SUBJECT PROGRESS
+
+Mathematics
+Science
+Social Science
+
+MONTHLY PROGRESS
+
+October
+November
+December
+
+COMPLETION STREAK
+
+Current streak
+
+Longest streak
+
+Only calculate these from real stored user data.
+
+Do not use fake statistics.
+
+If there is insufficient data, show:
+
+"No data yet"
+
+rather than inventing numbers.
+
+---
+
+16. CALENDAR VIEW
+
+Create a calendar interface.
+
+The user should be able to see the 90-day plan mapped onto dates.
+
+Each date should visually indicate:
+
+- Not started
+- Completed
+- Base
+- Mid
+- Peak
+
+Clicking a date opens the corresponding study day.
+
+The calendar must be synchronized with the 90-day dataset.
+
+---
+
+17. MONTHLY MILESTONES
+
+Preserve the milestones from the PDF.
+
+The application should recognize:
+
+DAY 31
+
+October milestone / review
+
+DAY 60
+
+75% syllabus milestone
+
+DAY 90
+
+100% syllabus completion
+
+Create milestone cards.
+
+Example:
+
+━━━━━━━━━━━━━━━━
+
+MILESTONE
+
+DAY 60
+
+75% SYLLABUS
+
+━━━━━━━━━━━━━━━━
+
+Show actual progress dynamically.
+
+If achieved:
+
+✓ MILESTONE ACHIEVED
+
+If not:
+
+X% REMAINING
+
+---
+
+18. FINAL READINESS PAGE
+
+Create a final exam-readiness dashboard based on the PDF's final checklist.
+
+Include:
+
+☐ 100% Syllabus Completed
+
+☐ Competency Questions Practiced
+
+☐ 1-Page Micro-Scribe Cheat Sheets Ready
+
+☐ Base Topics Conquered
+
+These should be interactive checkboxes.
+
+Also show an overall readiness indicator.
+
+IMPORTANT:
+
+Do not claim that the student is "exam ready" merely because they opened the page.
+
+The readiness state should be based on actual completion/checklist data.
+
+---
+
+19. MICRO-SCRIBE TRACKING
+
+The PDF emphasizes creating 1-page micro-scribe cheat sheets.
+
+Add an optional field to each relevant topic/day:
+
+MICRO-SCRIBE
+
+☐ Created
+
+[ Add note / link ]
+
+This should be stored separately from the study target.
+
+---
+
+20. NOTES
+
+Every day should have a personal notes field.
+
+Example:
+
+"What I struggled with today..."
+
+"What I need to revise..."
+
+"Important formula..."
+
+"Questions I got wrong..."
+
+The notes must persist.
+
+Use local storage or database depending on the architecture selected.
+
+---
+
+21. DATA ARCHITECTURE
+
+DO NOT create 90 completely separate hardcoded pages.
+
+Create one structured dataset containing all 90 days.
+
+Each day should contain fields similar to:
+
+{
+"day": 1,
+"date": "...",
+"month": "October",
+"subject": "Mathematics",
+"chapter": "...",
+"topic": "...",
+"target": "...",
+"status": "not_started",
+"performance": null,
+"notes": "",
+"revision1": false,
+"revision2": false,
+"microscribe": false
+}
+
+Populate this dataset from the attached PDF.
+
+The exact field names may differ depending on implementation, but the architecture must remain structured and maintainable.
+
+---
+
+22. USER DATA PERSISTENCE
+
+The tracker must remember user progress.
+
+At minimum, use persistent browser storage.
+
+Prefer a real database if the platform supports it.
+
+The following should persist:
+
+- Completed days
+- Performance ratings
+- Notes
+- Revision status
+- Micro-scribe status
+- Checklist status
+- User settings
+
+Refreshing the page must NOT reset progress.
+
+Closing and reopening the browser must NOT reset progress.
+
+---
+
+23. OPTIONAL ACCOUNT SYSTEM
+
+If the chosen AI builder supports authentication and a database, implement:
+
+SIGN UP
+LOGIN
+LOGOUT
+
+Each student's progress should be associated with their account.
+
+If authentication is implemented:
+
+User
+↓
+Authentication
+↓
+User Progress
+↓
+90-Day Tracker
+
+A student should be able to log in from another device and see their saved progress.
+
+If the platform does not support backend authentication, implement reliable local persistence instead.
+
+---
+
+24. SETTINGS
+
+Create a clean Settings page.
+
+Include:
+
+- Student name
+- Start date
+- Theme: Dark / Light / System
+- Reset progress
+- Export progress
+- Import progress
+
+IMPORTANT:
+
+The Reset Progress button must require confirmation.
+
+Example:
+
+"Are you sure? This will permanently reset your tracker progress."
+
+Do not accidentally reset data.
+
+---
+
+25. EXPORT / BACKUP
+
+If technically feasible, allow the student to export their progress.
+
+Options:
+
+- JSON
+- CSV
+- Printable report
+
+Example:
+
+EXPORT MY PROGRESS
+
+The export should include:
+
+- Day
+- Date
+- Subject
+- Topic
+- Status
+- Performance
+- Notes
+- Revision status
+
+This is especially useful if the app uses local storage.
+
+---
+
+26. IMPORT
+
+Allow previously exported progress to be imported back into the tracker.
+
+Validate the imported data.
+
+Do not corrupt existing data if the import is invalid.
+
+---
+
+27. SEARCH
+
+Add a global search function.
+
+The student should be able to search:
+
+- Chapter
+- Topic
+- Subject
+- Day
+- Keywords
+
+Example:
+
+Search:
+
+"Triangles"
+
+Results:
+
+Day 25
+Day 26
+
+Clicking a result opens the relevant day.
+
+---
+
+28. FILTERING
+
+Allow filtering by:
+
+Subject
+
+Month
+
+Status
+
+Performance
+
+Examples:
+
+"Show only Base topics."
+
+"Show only Mathematics."
+
+"Show only incomplete days."
+
+"Show only November."
+
+Filters must actually work.
+
+---
+
+29. NAVIGATION
+
+Desktop navigation can contain:
+
+Dashboard
+90-Day Journey
+Calendar
+Subjects
+Weak Areas
+Analytics
+Final Readiness
+Settings
+
+Mobile navigation should use a compact bottom navigation or similarly intuitive mobile pattern.
+
+Keep navigation simple.
+
+---
+
+30. PROGRESS CALCULATION
+
+All statistics must be calculated dynamically.
+
+Examples:
+
+Overall Progress:
+
+completed_days / total_days * 100
+
+Subject Progress:
+
+completed_subject_days / total_subject_days * 100
+
+Performance:
+
+Base count
+Mid count
+Peak count
+
+Remaining:
+
+90 - completed_days
+
+Never hardcode these values.
+
+---
+
+31. GAMIFICATION — KEEP IT SUBTLE
+
+You may add lightweight motivational features such as:
+
+- Daily streak
+- Milestone celebrations
+- Progress percentage
+- Completion animation
+- "Day completed" feedback
+
+Do NOT turn this into an excessive game.
+
+The primary goal is studying.
+
+---
+
+32. COMPLETION EXPERIENCE
+
+When a student completes a day:
+
+Show a subtle success interaction.
+
+Example:
+
+✓ DAY 25 COMPLETED
+
+Then update:
+
+- Overall progress
+- Subject progress
+- Calendar
+- Dashboard
+- Streak
+- Analytics
+
+All views should remain synchronized.
+
+---
+
+33. PERFORMANCE RATING EXPERIENCE
+
+When the student chooses:
+
+BASE
+
+show a subtle indication:
+
+"Marked for revision."
+
+MID:
+
+"Concept understood — keep practicing."
+
+PEAK:
+
+"Marked as mastered."
+
+These messages should not alter the underlying study content.
+
+---
+
+34. UI DETAILS
+
+Use:
+
+- Rounded but not excessively rounded cards
+- Clear typography
+- Strong headings
+- Compact labels
+- Consistent spacing
+- Subtle shadows
+- Elegant borders
+- Smooth hover states
+- Touch feedback
+- Accessible contrast
+
+Avoid:
+
+- Excessive gradients
+- Giant animations
+- Excessive glassmorphism
+- Clutter
+- Tiny text
+- Huge empty spaces
+- Excessive decorative illustrations
+
+The app should remain fast.
+
+---
+
+35. PERFORMANCE REQUIREMENTS
+
+Optimize aggressively.
+
+The website must:
+
+- Load quickly
+- Avoid unnecessary JavaScript
+- Avoid huge image assets
+- Lazy-load non-critical assets
+- Avoid unnecessary re-renders
+- Avoid layout shifts
+- Avoid forced synchronous layout/reflows
+- Use modern image formats where images exist
+- Minimize unnecessary network requests
+- Cache appropriate static assets
+- Keep the main dashboard lightweight
+
+The app should remain smooth on average Android phones.
+
+---
+
+36. ACCESSIBILITY
+
+Implement:
+
+- Keyboard navigation
+- Proper button labels
+- Accessible form controls
+- Sufficient contrast
+- Visible focus states
+- Semantic HTML
+- Screen-reader-friendly labels where applicable
+
+Do not rely only on color to communicate Base/Mid/Peak.
+
+---
+
+37. RESPONSIVE TESTING
+
+Before finishing, test the application at approximately:
+
+360px mobile width
+
+390px mobile width
+
+430px mobile width
+
+768px tablet width
+
+1024px laptop/tablet width
+
+1440px desktop width
+
+No important content should be cut off.
+
+No horizontal scrolling should occur on normal pages.
+
+---
+
+38. EMPTY STATES
+
+Every section must handle empty data gracefully.
+
+For example:
+
+No Base topics:
+
+"You're clear — no Base-rated topics yet."
+
+No completed days:
+
+"Your journey starts here."
+
+No notes:
+
+"No personal notes yet."
+
+Do not display fake content.
+
+---
+
+39. ERROR HANDLING
+
+Handle:
+
+- Failed saves
+- Invalid imports
+- Missing data
+- Database errors
+- Network failures if applicable
+
+Never silently lose user progress.
+
+If saving fails, tell the user.
+
+---
+
+40. PDF CONTENT INTEGRATION
+
+The attached PDF should be treated as source data.
+
+Extract the 90-day schedule and convert it into structured application data.
+
+Preserve:
+
+- Day numbering
+- Dates
+- Subject
+- Chapter/topic
+- Target/action plan
+- Monthly organization
+- Base/Mid/Peak concept
+- Milestones
+- Final checklist
+
+Do not omit days.
+
+Do not accidentally duplicate days.
+
+Do not reorder days.
+
+Verify that the final dataset contains all 90 planned days represented in the PDF.
+
+---
+
+41. IMPORTANT: DO NOT MODIFY THE STUDY PLAN
+
+The builder must NOT:
+
+- Rewrite the curriculum
+- Change dates
+- Add random chapters
+- Remove chapters
+- Replace the targets
+- Change the meaning of Base/Mid/Peak
+- Invent study tasks
+- Assume missing information
+
+The job is to digitize and enhance the tracking experience.
+
+Not to rewrite the educational plan.
+
+---
+
+42. FINAL APPLICATION FLOW
+
+The ideal user experience should be:
+
+OPEN WEBSITE
+
+↓
+
+DASHBOARD
+
+↓
+
+SEE TODAY'S MISSION
+
+↓
+
+OPEN TODAY
+
+↓
+
+READ CHAPTER + TARGET
+
+↓
+
+STUDY
+
+↓
+
+MARK COMPLETE
+
+↓
+
+SELECT BASE / MID / PEAK
+
+↓
+
+ADD NOTES
+
+↓
+
+SAVE
+
+↓
+
+DASHBOARD UPDATES
+
+↓
+
+PROGRESS UPDATES
+
+↓
+
+WEAK AREAS UPDATE
+
+↓
+
+MONTHLY MILESTONE PROGRESS UPDATES
+
+↓
+
+CONTINUE TO NEXT DAY
+
+The entire experience should feel connected.
+
+---
+
+43. DESIGN THE EXPERIENCE AROUND THE JOURNEY
+
+The most important conceptual element is:
+
+This is a 90-day journey.
+
+Do not make the app feel like a database of 90 rows.
+
+Make the student feel like they are progressing through a journey.
+
+The interface should communicate:
+
+DAY 1
+
+↓
+
+DAY 10
+
+↓
+
+DAY 30
+
+↓
+
+DAY 60
+
+↓
+
+DAY 90
+
+Every completed day should contribute visually to the student's journey.
+
+---
+
+44. TECHNICAL QUALITY
+
+Write clean, maintainable code.
+
+Use reusable components.
+
+Avoid duplicated code.
+
+Separate:
+
+- Study-plan data
+- User progress
+- UI components
+- Calculations
+- Storage/database logic
+
+Do not put the entire application into one giant component.
+
+Use a clean architecture appropriate for the selected platform.
+
+---
+
+45. IMPORTANT: REAL FUNCTIONALITY
+
+Every interactive element must work.
+
+Do NOT create:
+
+- Fake buttons
+- Fake charts
+- Fake progress bars
+- Fake login
+- Fake settings
+- Fake search
+- Fake filters
+
+If you display a control, implement its functionality.
+
+---
+
+46. BEFORE FINALIZING
+
+Perform a complete internal QA pass.
+
+Verify:
+
+1. All PDF study-plan days were imported.
+2. Day numbering is correct.
+3. Dates are correct.
+4. Subjects are correct.
+5. Chapters/topics are correct.
+6. Targets/action plans are correct.
+7. Base/Mid/Peak works.
+8. Completion works.
+9. Notes save.
+10. Progress updates dynamically.
+11. Weak Areas updates dynamically.
+12. Calendar works.
+13. Search works.
+14. Filters work.
+15. Settings work.
+16. Data survives refresh.
+17. Mobile layout works.
+18. Desktop layout works.
+19. No fake statistics exist.
+20. No placeholder study content remains.
+21. No broken buttons remain.
+22. No console errors remain.
+23. No major accessibility issues remain.
+
+---
+
+47. FINAL VISUAL GOAL
+
+The final website should feel like a polished digital product.
+
+When a student opens it, the first reaction should be:
+
+"I know exactly what I have to do today."
+
+And after completing a task:
+
+"I can clearly see how far I've progressed."
+
+The website should transform the attached PDF from a static planner into a living 90-day preparation system.
+
+Build the complete working application, not merely a visual prototype.
+
+Use the attached PDF as the source of truth for the actual study-plan content.
