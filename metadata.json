@@ -1,0 +1,7 @@
+{
+  "name": "Class 9 90-Day Blueprint",
+  "description": "Class 9 90-Day Blueprint — 90-day study ritual and syllabus tracker for students.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

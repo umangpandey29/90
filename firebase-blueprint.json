@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "UserSettings": {
+      "title": "User Settings",
+      "description": "User specific study settings and start date",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "startDate": { "type": "string", "maxLength": 32 },
+        "timezone": { "type": "string", "maxLength": 64 },
+        "theme": { "type": "string", "enum": ["light", "dark"] },
+        "adsEnabled": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "startDate", "theme", "adsEnabled"]
+    },
+    "UserProgress": {
+      "title": "User Progress",
+      "description": "User progress for each study day",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "dayNumber": { "type": "number" },
+        "status": { "type": "string", "enum": ["not-started", "in-progress", "complete"] },
+        "performance": { "type": "string", "enum": ["Base", "Mid", "Peak"] },
+        "notes": { "type": "string", "maxLength": 5000 },
+        "revision1": { "type": "boolean" },
+        "revision2": { "type": "boolean" },
+        "microScribe": { "type": "string", "maxLength": 5000 },
+        "assignedDate": { "type": "string", "maxLength": 32 },
+        "completionDate": { "type": "string", "maxLength": 32 },
+        "completionTimestamp": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "dayNumber", "status"]
+    },
+    "ReadinessChecklist": {
+      "title": "Readiness Checklist",
+      "description": "Final readiness checklist items checked by user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "items": { "type": "array" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId"]
+    }
+  },
+  "firestore": {
+    "/user_settings/{userId}": {
+      "schema": { "$ref": "#/entities/UserSettings" },
+      "description": "User settings document"
+    },
+    "/users/{userId}/progress/{progressId}": {
+      "schema": { "$ref": "#/entities/UserProgress" },
+      "description": "User progress per study day"
+    },
+    "/users/{userId}/readiness/{readinessId}": {
+      "schema": { "$ref": "#/entities/ReadinessChecklist" },
+      "description": "User readiness checklist"
+    }
+  }
+}

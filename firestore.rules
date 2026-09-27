@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidUserSettings(data) {
+      return data.keys().hasAll(['userId', 'startDate', 'theme', 'adsEnabled']) &&
+        data.keys().hasOnly(['userId', 'startDate', 'timezone', 'theme', 'adsEnabled', 'updatedAt']) &&
+        data.userId is string && data.userId == request.auth.uid &&
+        data.startDate is string && data.startDate.size() <= 32 &&
+        data.theme is string && (data.theme == 'light' || data.theme == 'dark') &&
+        data.adsEnabled is bool;
+    }
+
+    function isValidUserProgress(data) {
+      return data.keys().hasAll(['userId', 'dayNumber', 'status']) &&
+        data.keys().hasOnly(['userId', 'dayNumber', 'status', 'performance', 'notes', 'revision1', 'revision2', 'microScribe', 'assignedDate', 'completionDate', 'completionTimestamp', 'updatedAt']) &&
+        data.userId is string && data.userId == request.auth.uid &&
+        data.dayNumber is number && data.dayNumber >= 1 && data.dayNumber <= 90 &&
+        data.status is string && (data.status == 'not-started' || data.status == 'in-progress' || data.status == 'complete');
+    }
+
+    match /user_settings/{userId} {
+      allow get, list: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidUserSettings(incoming());
+    }
+
+    match /users/{userId}/progress/{progressId} {
+      allow list, get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUserProgress(incoming());
+      allow update: if isOwner(userId) && isValidUserProgress(incoming()) && incoming().userId == existing().userId && incoming().dayNumber == existing().dayNumber;
+      allow delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/readiness/{readinessId} {
+      allow list, get: if isOwner(userId);
+      allow create, update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+  }
+}
