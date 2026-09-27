@@ -1,0 +1,3 @@
+[build]
+  command = "bun run build"
+  publish = "artifacts/class9-blueprint/dist/public"
