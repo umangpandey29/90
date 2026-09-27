@@ -22,9 +22,9 @@ export const LandingPage: React.FC = () => {
       <header className="sticky top-0 z-30 border-b border-border/80 bg-background/90 backdrop-blur-md">
         <div className="mx-auto flex h-16 sm:h-20 max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-12">
           <div className="flex items-center gap-2 sm:gap-3">
-            <span className="grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-xl bg-primary font-display text-lg sm:text-xl text-primary-foreground">9</span>
+            <span className="grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-xl bg-primary font-display text-lg sm:text-xl text-primary-foreground">FC</span>
             <div>
-              <span className="block font-display text-base sm:text-lg leading-none">Class 9 Blueprint</span>
+              <span className="block font-display text-base sm:text-lg leading-none">Final Comeback</span>
               <span className="font-mono text-[8px] sm:text-[9px] uppercase tracking-[.18em] text-muted-foreground">90-Day Study System</span>
             </div>
           </div>
@@ -49,7 +49,7 @@ export const LandingPage: React.FC = () => {
 
       {/* Ad slot 1: Hero banner */}
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 pt-4">
-        <BannerAd adsEnabled={true} />
+        <BannerAd adsEnabled={true} slotName="landing-hero-top" />
       </div>
 
       {/* Hero Section */}
@@ -71,19 +71,13 @@ export const LandingPage: React.FC = () => {
             >
               Sign In with Google <ArrowRight className="h-5 w-5" />
             </button>
-            <Link
-              href="/journey"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-7 py-4 text-sm sm:text-base font-bold text-foreground hover:bg-muted transition"
-            >
-              Preview Syllabus
-            </Link>
           </div>
         </div>
       </section>
 
       {/* Ad slot 2: In-content */}
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6">
-        <InContentAd adsEnabled={true} />
+        <InContentAd adsEnabled={true} slotName="landing-mid-content" />
       </div>
 
       {/* Features Grid */}
@@ -123,19 +117,19 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Ad slot 3: Sidebar / Banner */}
-      <div className="mx-auto max-w-[1440px] px-4 sm:px-6">
-        <SidebarAd adsEnabled={true} />
+      {/* Ad slot 3 & 4: Sidebar & Mobile */}
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 space-y-4">
+        <SidebarAd adsEnabled={true} slotName="landing-bottom-sidebar" />
+        <MobileAd adsEnabled={true} slotName="landing-bottom-mobile" />
       </div>
 
       {/* Footer */}
       <footer className="border-t border-border bg-card py-10 sm:py-12 text-center text-xs text-muted-foreground">
         <div className="mx-auto max-w-[1440px] px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© 2026 Class 9 90-Day Strategic Study Blueprint. All rights reserved.</p>
+          <p>© 2026 Final Comeback. All rights reserved.</p>
           <div className="flex gap-6">
             <Link href="/landing" className="hover:text-foreground">Home</Link>
             <Link href="/login" className="hover:text-foreground">Sign In</Link>
-            <Link href="/journey" className="hover:text-foreground">Journey</Link>
           </div>
         </div>
       </footer>

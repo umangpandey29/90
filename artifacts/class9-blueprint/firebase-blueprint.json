@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "UserSettings": {
+      "title": "User Settings",
+      "description": "Custom start dates and app theme settings",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "startDate": { "type": "string" },
+        "theme": { "type": "string" },
+        "notes": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId"]
+    },
+    "UserProgress": {
+      "title": "User Progress",
+      "description": "Progress state for a single day in the 90-day plan",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "dayNumber": { "type": "number" },
+        "status": { "type": "string" },
+        "performance": { "type": "string" },
+        "notes": { "type": "string" },
+        "revision1": { "type": "boolean" },
+        "revision2": { "type": "boolean" },
+        "microScribe": { "type": "string" },
+        "completionTimestamp": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "dayNumber"]
+    },
+    "UserReadiness": {
+      "title": "User Readiness",
+      "description": "Readiness checklist state",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "items": { "type": "array" },
+        "updatedAt": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/user_settings/{userId}": {
+      "schema": "UserSettings",
+      "description": "User specific app settings"
+    },
+    "/users/{userId}/progress/{dayDoc}": {
+      "schema": "UserProgress",
+      "description": "User progress per day"
+    },
+    "/users/{userId}/readiness/{docId}": {
+      "schema": "UserReadiness",
+      "description": "User readiness checklist"
+    }
+  }
+}

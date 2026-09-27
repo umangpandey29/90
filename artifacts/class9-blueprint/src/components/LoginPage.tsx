@@ -28,9 +28,9 @@ export const LoginPage: React.FC = () => {
       <header className="border-b border-border/80 bg-background/90 backdrop-blur-md">
         <div className="mx-auto flex h-16 sm:h-20 max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-12">
           <Link href="/landing" className="flex items-center gap-2 sm:gap-3">
-            <span className="grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-xl bg-primary font-display text-lg sm:text-xl text-primary-foreground">9</span>
+            <span className="grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-xl bg-primary font-display text-lg sm:text-xl text-primary-foreground">FC</span>
             <div>
-              <span className="block font-display text-base sm:text-lg leading-none">Class 9 Blueprint</span>
+              <span className="block font-display text-base sm:text-lg leading-none">Final Comeback</span>
               <span className="font-mono text-[8px] sm:text-[9px] uppercase tracking-[.18em] text-muted-foreground">Secure Portal</span>
             </div>
           </Link>
@@ -89,7 +89,7 @@ export const LoginPage: React.FC = () => {
 
       {/* Footer */}
       <footer className="border-t border-border bg-card py-6 text-center text-xs text-muted-foreground">
-        <p>© 2026 Class 9 90-Day Strategic Study Blueprint</p>
+        <p>© 2026 Final Comeback. All rights reserved.</p>
       </footer>
     </div>
   );

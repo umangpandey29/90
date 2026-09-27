@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { BarChart3, BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight, CircleHelp, ClipboardCheck, Download, Filter, Flame, Grid2X2, ListChecks, Menu, Moon, NotebookPen, RotateCcw, Save, Search, Settings, Sun, Target, Trash2, Trophy, Upload, X, Zap, Clock, Calendar } from 'lucide-react';
+import { BarChart3, BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight, CircleHelp, ClipboardCheck, Download, Filter, Flame, Grid2X2, ListChecks, Menu, Moon, NotebookPen, RotateCcw, Save, Search, Settings, Sun, Target, Trash2, Trophy, Upload, X, Zap, Clock, Calendar, AlertTriangle } from 'lucide-react';
 import { Link, Route, Router as WouterRouter, Switch, useLocation, useParams } from 'wouter';
 import { ErrorBoundary } from '@/components/error-boundary';
 import NotFound from '@/pages/not-found';
 import { blueprint, checklistItems, milestones, months, ratingDefinitions, type Month, type PlanDay, type Rating, type Status, type Subject } from '@/lib/blueprint';
-import { auth, db } from '@/lib/firebase';
+import { auth, db, handleFirestoreError, OperationType } from '@/lib/firebase';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { doc, getDoc, setDoc, collection, getDocs, updateDoc } from 'firebase/firestore';
 import { AuthBar } from '@/components/AuthBar';
@@ -103,7 +103,7 @@ function usePersistentStore(): Store {
 
           setSyncStatus('synced');
         } catch (e) {
-          console.error("Cloud sync load error:", e);
+          console.warn("Cloud sync load fallback to local:", e);
           setSyncStatus('local');
         }
       } else {
@@ -126,7 +126,8 @@ function usePersistentStore(): Store {
     if (!auth.currentUser) return;
     setSyncStatus('syncing');
     try {
-      const ref = doc(db, 'users', auth.currentUser.uid, 'progress', `day_${dayNumber}`);
+      const path = `users/${auth.currentUser.uid}/progress/day_${dayNumber}`;
+      const ref = doc(db, path);
       await setDoc(ref, {
         userId: auth.currentUser.uid,
         dayNumber,
@@ -141,7 +142,7 @@ function usePersistentStore(): Store {
       }, { merge: true });
       setSyncStatus('synced');
     } catch (e) {
-      console.error(e);
+      console.warn("Cloud day sync error:", e);
       setSyncStatus('local');
     }
   };
@@ -150,11 +151,12 @@ function usePersistentStore(): Store {
     if (!auth.currentUser) return;
     setSyncStatus('syncing');
     try {
-      const ref = doc(db, 'user_settings', auth.currentUser.uid);
+      const path = `user_settings/${auth.currentUser.uid}`;
+      const ref = doc(db, path);
       await setDoc(ref, { ...newSettings, userId: auth.currentUser.uid, updatedAt: new Date().toISOString() }, { merge: true });
       setSyncStatus('synced');
     } catch (e) {
-      console.error(e);
+      console.warn("Cloud settings sync error:", e);
       setSyncStatus('local');
     }
   };
@@ -163,11 +165,12 @@ function usePersistentStore(): Store {
     if (!auth.currentUser) return;
     setSyncStatus('syncing');
     try {
-      const ref = doc(db, 'users', auth.currentUser.uid, 'readiness', 'main');
+      const path = `users/${auth.currentUser.uid}/readiness/main`;
+      const ref = doc(db, path);
       await setDoc(ref, { userId: auth.currentUser.uid, items: newChecklist, updatedAt: new Date().toISOString() }, { merge: true });
       setSyncStatus('synced');
     } catch (e) {
-      console.error(e);
+      console.warn("Cloud checklist sync error:", e);
       setSyncStatus('local');
     }
   };
@@ -199,10 +202,45 @@ function usePersistentStore(): Store {
         return item;
       }));
     },
-    resetAll: () => {
+    resetAll: async () => {
       const fresh = makeDays();
       setDays(fresh);
       setChecklist([false, false, false, false]);
+      localStorage.setItem('class9-blueprint-days', JSON.stringify(fresh));
+      localStorage.setItem('class9-blueprint-checklist', JSON.stringify([false, false, false, false]));
+
+      if (auth.currentUser) {
+        setSyncStatus('syncing');
+        try {
+          const uid = auth.currentUser.uid;
+          const batchPromises = fresh.map((d) => {
+            const ref = doc(db, 'users', uid, 'progress', `day_${d.day}`);
+            return setDoc(ref, {
+              userId: uid,
+              dayNumber: d.day,
+              status: 'not-started',
+              performance: null,
+              notes: '',
+              revision1: false,
+              revision2: false,
+              microScribe: '',
+              completionTimestamp: null,
+              updatedAt: new Date().toISOString()
+            });
+          });
+          const readinessRef = doc(db, 'users', uid, 'readiness', 'main');
+          const resetReadiness = setDoc(readinessRef, {
+            userId: uid,
+            items: [false, false, false, false],
+            updatedAt: new Date().toISOString()
+          });
+          await Promise.all([...batchPromises, resetReadiness]);
+          setSyncStatus('synced');
+        } catch (e) {
+          console.error("Cloud reset error:", e);
+          setSyncStatus('local');
+        }
+      }
     },
     updateSettings: (patch) => {
       setSettings((current) => {
@@ -287,12 +325,15 @@ function Shell({ children }: { children: ReactNode }) {
   const globalMatches = search.trim() ? days.filter((item) => `${item.chapter} ${item.target} ${item.subject}`.toLowerCase().includes(search.toLowerCase())).slice(0, 5) : [];
   return <div className="min-h-[100dvh] bg-background text-foreground">
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[246px] flex-col border-r border-sidebar-border bg-sidebar px-4 py-5 text-sidebar-foreground lg:flex">
-      <Link href="/" className="mb-8 flex items-center gap-3 px-2 focus-ring" data-testid="link-brand"><span className="grid h-10 w-10 place-items-center rounded-xl bg-sidebar-primary font-display text-xl text-sidebar-primary-foreground">9</span><span><span className="block font-display text-lg leading-none">Blueprint</span><span className="font-mono text-[9px] uppercase tracking-[.18em] text-sidebar-foreground/55">90 day study ritual</span></span></Link>
+      <Link href="/" className="mb-8 flex items-center gap-3 px-2 focus-ring" data-testid="link-brand"><span className="grid h-10 w-10 place-items-center rounded-xl bg-sidebar-primary font-display text-xl text-sidebar-primary-foreground">FC</span><span><span className="block font-display text-lg leading-none">Final Comeback</span><span className="font-mono text-[9px] uppercase tracking-[.18em] text-sidebar-foreground/55">90 day study system</span></span></Link>
       <p className="mb-2 px-2 font-mono text-[9px] uppercase tracking-[.2em] text-sidebar-foreground/45">Plan</p>
       <nav className="space-y-1">{nav.map(({ href, label, icon: Icon }) => <Link key={href} href={href} data-testid={`link-nav-${label.toLowerCase().replace(/[^a-z]/g, '-')}`} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${location === href ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'}`}><Icon className="h-4 w-4" />{label}{href === '/today' && <span className="ml-auto h-2 w-2 rounded-full bg-sidebar-primary" />}{href === '/backlog' && backlogCount > 0 && <span className="ml-auto rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground">{backlogCount}</span>}</Link>)}</nav>
       <p className="mb-2 mt-8 px-2 font-mono text-[9px] uppercase tracking-[.2em] text-sidebar-foreground/45">Finish line</p>
       <Link href="/readiness" data-testid="link-nav-readiness" className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${location === '/readiness' ? 'bg-sidebar-accent font-semibold' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'}`}><ClipboardCheck className="h-4 w-4" />Readiness</Link>
       <Link href="/settings" data-testid="link-nav-settings" className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${location === '/settings' ? 'bg-sidebar-accent font-semibold' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground'}`}><Settings className="h-4 w-4" />Settings</Link>
+      <div className="my-2">
+        <SidebarAd adsEnabled={settings.adsEnabled} slotName="shell-sidebar-nav" />
+      </div>
       <div className="mt-auto rounded-2xl border border-sidebar-border bg-sidebar-accent/65 p-3"><div className="mb-2 flex items-center justify-between"><span className="font-mono text-[10px] uppercase tracking-wider text-sidebar-foreground/55">Journey complete</span><span className="font-display text-xl">{complete}</span></div><ProgressBar value={complete / .9} color="bg-sidebar-primary" /><p className="mt-2 text-xs text-sidebar-foreground/55">of 90 days logged</p></div>
     </aside>
     <div className="lg:pl-[246px]">
@@ -311,7 +352,7 @@ function Shell({ children }: { children: ReactNode }) {
       </main>
     </div>
     <nav className="fixed inset-x-3 bottom-3 z-30 flex items-center justify-around rounded-2xl border border-border bg-card/95 p-2 shadow-xl backdrop-blur lg:hidden">{nav.slice(0, 5).map(({ href, label, icon: Icon }) => <Link key={href} href={href} data-testid={`link-mobile-${label.toLowerCase()}`} className={`flex min-w-12 flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-[9px] font-semibold ${location === href ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}><Icon className="h-4 w-4" /><span>{label.split(' ')[0]}</span></Link>)}</nav>
-    {mobileNav && <div className="fixed inset-0 z-50 bg-foreground/30 lg:hidden" onClick={() => setMobileNav(false)}><div className="h-full w-[280px] bg-sidebar p-5 text-sidebar-foreground overflow-y-auto" onClick={(event) => event.stopPropagation()}><div className="mb-8 flex items-center justify-between"><span className="font-display text-xl">Blueprint</span><button data-testid="button-close-mobile-menu" onClick={() => setMobileNav(false)} className="rounded-lg p-2 hover:bg-sidebar-accent"><X className="h-5 w-5" /></button></div>{nav.map(({ href, label, icon: Icon }) => <Link key={href} href={href} onClick={() => setMobileNav(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-sidebar-foreground/85 hover:bg-sidebar-accent"><Icon className="h-4 w-4" />{label}</Link>)}<Link href="/readiness" onClick={() => setMobileNav(false)} className="mt-6 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-sidebar-foreground/85 hover:bg-sidebar-accent"><ClipboardCheck className="h-4 w-4" />Readiness</Link><Link href="/settings" onClick={() => setMobileNav(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-sidebar-foreground/85 hover:bg-sidebar-accent"><Settings className="h-4 w-4" />Settings</Link></div></div>}
+    {mobileNav && <div className="fixed inset-0 z-50 bg-foreground/30 lg:hidden" onClick={() => setMobileNav(false)}><div className="h-full w-[280px] bg-sidebar p-5 text-sidebar-foreground overflow-y-auto" onClick={(event) => event.stopPropagation()}><div className="mb-8 flex items-center justify-between"><span className="font-display text-xl">Final Comeback</span><button data-testid="button-close-mobile-menu" onClick={() => setMobileNav(false)} className="rounded-lg p-2 hover:bg-sidebar-accent"><X className="h-5 w-5" /></button></div>{nav.map(({ href, label, icon: Icon }) => <Link key={href} href={href} onClick={() => setMobileNav(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-sidebar-foreground/85 hover:bg-sidebar-accent"><Icon className="h-4 w-4" />{label}</Link>)}<Link href="/readiness" onClick={() => setMobileNav(false)} className="mt-6 flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-sidebar-foreground/85 hover:bg-sidebar-accent"><ClipboardCheck className="h-4 w-4" />Readiness</Link><Link href="/settings" onClick={() => setMobileNav(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-sidebar-foreground/85 hover:bg-sidebar-accent"><Settings className="h-4 w-4" />Settings</Link></div></div>}
   </div>;
 }
 
@@ -400,7 +441,7 @@ function Dashboard() {
     </section>
 
     {/* Non-intrusive Banner Ad */}
-    <BannerAd adsEnabled={settings.adsEnabled} />
+    <BannerAd adsEnabled={settings.adsEnabled} slotName="dashboard-top-banner" />
 
     <div className="grid gap-5 xl:grid-cols-[1.45fr_1fr]">
       <section className="rounded-2xl border border-card-border bg-card p-5 sm:p-6">
@@ -491,7 +532,7 @@ function Dashboard() {
     </section>
 
     {/* In-content Ad */}
-    <InContentAd adsEnabled={settings.adsEnabled} />
+    <InContentAd adsEnabled={settings.adsEnabled} slotName="dashboard-mid-content" />
 
     <section className="mt-5 grid gap-5 lg:grid-cols-[1fr_1fr]">
       <div className="rounded-2xl border border-primary/15 bg-primary p-5 text-primary-foreground">
@@ -510,6 +551,8 @@ function Dashboard() {
         <div className="mt-4 space-y-3">{milestones.map((milestone) => <div key={milestone.day} className="flex gap-3"><div className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg text-xs font-bold ${days[milestone.day - 1].status === 'complete' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>{days[milestone.day - 1].status === 'complete' ? <Check className="h-3.5 w-3.5" /> : milestone.day}</div><div><p className="text-sm font-semibold">{milestone.title}</p><p className="mt-0.5 text-xs text-muted-foreground">{milestone.copy}</p></div></div>)}</div>
       </div>
     </section>
+
+    <MobileAd adsEnabled={settings.adsEnabled} slotName="dashboard-bottom-mobile" />
   </>;
 }
 
@@ -531,6 +574,8 @@ function Journey() {
     <PageTitle eyebrow="The full syllabus" title="Your journey." copy="Ninety focused days, grouped into three phases. Use filters when you need a closer view." action={<button data-testid="button-toggle-filters" onClick={() => setShowFilters(!showFilters)} className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-bold hover:bg-muted focus-ring"><Filter className="h-4 w-4" />Filters {showFilters ? 'on' : ''}</button>} />
     {showFilters && <div className="mb-6 grid gap-3 rounded-2xl border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-4">{[['Subject', subject, setSubject, ['All subjects', 'Mathematics', 'Science', 'Social Science', 'English & Language', 'All Subjects']], ['Month', month, setMonth, ['All months', ...months]], ['Status', status, setStatus, ['All status', 'Complete', 'In progress', 'Not started']], ['Performance', performance, setPerformance, ['All performance', 'Base', 'Mid', 'Peak']]].map(([label, value, setter, options]) => <label key={String(label)} className="text-xs font-bold text-muted-foreground">{String(label)}<select data-testid={`select-filter-${String(label).toLowerCase()}`} value={String(value)} onChange={(event) => (setter as (value: string) => void)(event.target.value)} className="mt-1.5 h-10 w-full rounded-lg border border-input bg-background px-2 text-sm font-normal text-foreground outline-none focus:ring-2 focus:ring-ring/20">{(options as string[]).map((option) => <option key={option}>{option}</option>)}</select></label>)}</div>}
     
+    <BannerAd adsEnabled={settings.adsEnabled} slotName="journey-top-banner" />
+
     <div className="mb-5 flex items-center justify-between text-xs text-muted-foreground"><span>{filtered.length} of 90 days shown</span><span className="font-mono">{days.filter((item) => item.status === 'complete').length}/90 complete</span></div>
     
     {months.map((monthName, idx) => { 
@@ -546,16 +591,18 @@ function Journey() {
             </div>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{group.map((day) => <DayCard key={day.day} day={day} onSelect={(id) => setLocation(`/journey/day/${id}`)} />)}</div>
           </section>
-          {idx === 0 && <InContentAd adsEnabled={settings.adsEnabled} />}
+          {idx === 0 && <InContentAd adsEnabled={settings.adsEnabled} slotName="journey-month1-content" />}
+          {idx === 1 && <InContentAd adsEnabled={settings.adsEnabled} slotName="journey-month2-content" />}
         </React.Fragment>
       ); 
     })}
     {!filtered.length && <EmptyState icon={Search} title="No data yet for this view" copy="Try loosening one of the filters to see plan days." />}
+    <MobileAd adsEnabled={settings.adsEnabled} slotName="journey-bottom-mobile" />
   </>;
 }
 
 function Today() {
-  const { days } = useBlueprint();
+  const { days, settings } = useBlueprint();
   const [_, setLocation] = useLocation();
   
   // TODAY button must always open the lowest-numbered incomplete Study Day
@@ -566,6 +613,9 @@ function Today() {
 
   return <>
     <PageTitle eyebrow="Date-driven focus" title="Today's Required Focus." copy={today.status === 'complete' ? 'All caught up! You can review completed days or explore ahead.' : 'The lowest-numbered incomplete study day in your 90-day sequence.'} action={<div className="flex items-center gap-2"><button disabled={!previous} data-testid="button-today-previous" onClick={() => previous && setLocation(`/journey/day/${previous.day}`)} className="rounded-xl border border-border bg-card p-3 text-muted-foreground disabled:opacity-40 hover:bg-muted focus-ring"><ChevronLeft className="h-4 w-4" /></button><button disabled={!next} data-testid="button-today-next" onClick={() => next && setLocation(`/journey/day/${next.day}`)} className="rounded-xl border border-border bg-card p-3 text-muted-foreground disabled:opacity-40 hover:bg-muted focus-ring"><ChevronRight className="h-4 w-4" /></button></div>} />
+    
+    <BannerAd adsEnabled={settings.adsEnabled} slotName="today-top-banner" />
+
     <div className="grid gap-5 lg:grid-cols-[1.35fr_.65fr]">
       <section className="rounded-2xl border border-card-border bg-card p-5 sm:p-8">
         <div className="flex flex-wrap items-center gap-2">
@@ -591,7 +641,12 @@ function Today() {
         </div>
       </aside>
     </div>
+
+    <InContentAd adsEnabled={settings.adsEnabled} slotName="today-mid-content" />
+
     <section className="mt-5 grid gap-3 sm:grid-cols-3">{days.slice(Math.max(0, index - 1), Math.min(90, index + 2)).map((day) => <DayCard key={day.day} day={day} compact onSelect={(id) => setLocation(`/journey/day/${id}`)} />)}</section>
+    
+    <MobileAd adsEnabled={settings.adsEnabled} slotName="today-bottom-mobile" />
   </>;
 }
 
@@ -604,13 +659,17 @@ function CalendarView() {
   const offset = monthIndex === 0 ? 3 : monthIndex === 1 ? 6 : 1;
   return <>
     <PageTitle eyebrow="Plan mapped to dates" title="Calendar." copy="A quiet view of every planned study date. Select a day to open its tracker." action={<div className="flex items-center gap-1 rounded-xl border border-border bg-card p-1"><button data-testid="button-calendar-previous" onClick={() => setMonthIndex(Math.max(0, monthIndex - 1))} className="rounded-lg p-2 hover:bg-muted disabled:opacity-30" disabled={!monthIndex}><ChevronLeft className="h-4 w-4" /></button><span className="w-24 text-center font-mono text-xs">{selectedMonth}</span><button data-testid="button-calendar-next" onClick={() => setMonthIndex(Math.min(2, monthIndex + 1))} className="rounded-lg p-2 hover:bg-muted disabled:opacity-30" disabled={monthIndex === 2}><ChevronRight className="h-4 w-4" /></button></div>} />
+    
+    <BannerAd adsEnabled={settings.adsEnabled} slotName="calendar-top-banner" />
+
     <div className="rounded-2xl border border-card-border bg-card p-3 sm:p-5">
       <div className="mb-3 grid grid-cols-7 gap-1 text-center font-mono text-[9px] uppercase tracking-wider text-muted-foreground sm:gap-2">{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => <div key={day} className="py-2">{day}</div>)}</div>
       <div className="grid grid-cols-7 gap-1 sm:gap-2">{Array.from({ length: offset }).map((_, i) => <div key={`blank-${i}`} className="min-h-24 rounded-xl bg-muted/30 sm:min-h-32" />)}{monthDays.map((day) => <button key={day.day} data-testid={`button-calendar-day-${day.day}`} onClick={() => setLocation(`/journey/day/${day.day}`)} className={`group min-h-24 rounded-xl border p-2 text-left transition hover:-translate-y-0.5 hover:border-ring focus-ring sm:min-h-32 ${day.status === 'complete' ? 'border-[hsl(168_48%_38%_/_.3)] bg-[hsl(168_31%_88%_/_.4)]' : day.status === 'in-progress' ? 'border-accent/50 bg-accent/10' : 'border-border bg-background'}`}><div className="flex items-start justify-between"><span className="font-display text-lg">{day.day - (monthIndex === 0 ? 0 : monthIndex === 1 ? 31 : 60)}</span>{day.status === 'complete' && <Check className="h-3.5 w-3.5 text-[hsl(168_48%_38%)]" />}</div><span className={`mt-2 hidden rounded px-1.5 py-1 text-[9px] font-bold uppercase tracking-wider sm:inline-block ${subjectColor[day.subject]}`}>{subjectShort[day.subject]}</span><p className="mt-2 line-clamp-2 text-[10px] leading-snug text-muted-foreground">{day.chapter.replace(/^Ch \d+: /, '')}</p></button>)}</div>
     </div>
     <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground"><span className="flex items-center gap-2"><i className="h-2.5 w-2.5 rounded-full bg-primary" />Complete</span><span className="flex items-center gap-2"><i className="h-2.5 w-2.5 rounded-full bg-accent" />In progress</span><span className="flex items-center gap-2"><i className="h-2.5 w-2.5 rounded-full bg-muted-foreground/30" />Not started</span></div>
     
-    <BannerAd adsEnabled={settings.adsEnabled} />
+    <InContentAd adsEnabled={settings.adsEnabled} slotName="calendar-bottom-content" />
+    <MobileAd adsEnabled={settings.adsEnabled} slotName="calendar-bottom-mobile" />
   </>;
 }
 
@@ -620,11 +679,16 @@ function Subjects() {
   const subjects: Subject[] = ['Mathematics', 'Science', 'Social Science', 'English & Language'];
   return <>
     <PageTitle eyebrow="See the balance" title="Subjects." copy="Keep the rotation honest. Each subject has its own pace inside the single 90-day plan." />
+    
+    <BannerAd adsEnabled={settings.adsEnabled} slotName="subjects-top-banner" />
+
     <div className="grid gap-4 md:grid-cols-2">{subjects.map((subject) => { const list = days.filter((item) => item.subject === subject); const complete = list.filter((item) => item.status === 'complete').length; const base = list.filter((item) => item.rating === 'Base').length; return <section key={subject} className="card-lift rounded-2xl border border-card-border bg-card p-5 sm:p-6"><div className="flex items-start justify-between"><div><span className={`rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${subjectColor[subject]}`}>{subjectShort[subject]}</span><h2 className="mt-4 font-display text-3xl">{subject}</h2></div><span className="font-display text-3xl">{complete}<small className="font-sans text-sm text-muted-foreground">/{list.length}</small></span></div><div className="mt-5"><ProgressBar value={complete / list.length * 100} color={subject === 'Mathematics' ? 'bg-[hsl(168_48%_38%)]' : subject === 'Science' ? 'bg-[hsl(41_72%_48%)]' : 'bg-[hsl(284_32%_58%)]'} /></div><div className="mt-3 flex items-center justify-between text-xs text-muted-foreground"><span>{complete ? `${Math.round(complete / list.length * 100)}% complete` : 'No data yet'}</span><span>{base ? `${base} Base topics` : 'No Base topics logged'}</span></div><button data-testid={`button-subject-${subjectShort[subject]}`} onClick={() => setLocation(`/journey`)} className="mt-5 flex w-full items-center justify-between rounded-lg border border-border px-3 py-2.5 text-xs font-bold hover:bg-muted focus-ring">Open subject plan <ChevronRight className="h-3.5 w-3.5" /></button></section>; })}</div>
     
-    <InContentAd adsEnabled={settings.adsEnabled} />
+    <InContentAd adsEnabled={settings.adsEnabled} slotName="subjects-mid-content" />
 
     <section className="mt-5 rounded-2xl border border-border bg-secondary/50 p-5"><p className="font-mono text-[10px] uppercase tracking-[.16em] text-muted-foreground">Rotation from the source</p><div className="mt-4 grid gap-3 text-sm sm:grid-cols-3"><div><span className="font-bold">October</span><p className="mt-1 text-muted-foreground">Build momentum across Math, Science, and SST.</p></div><div><span className="font-bold">November</span><p className="mt-1 text-muted-foreground">Reach the 75% syllabus milestone without backlog.</p></div><div><span className="font-bold">December</span><p className="mt-1 text-muted-foreground">Complete the syllabus, then test and revise.</p></div></div></section>
+    
+    <MobileAd adsEnabled={settings.adsEnabled} slotName="subjects-bottom-mobile" />
   </>;
 }
 
@@ -634,9 +698,13 @@ function WeakAreas() {
   const weak = days.filter((item) => item.rating === 'Base');
   return <>
     <PageTitle eyebrow="Make weak actionable" title="Weak areas." copy="Every Base rating lands here. Revisit it, record revision 1 and 2, then update the rating when the understanding moves." action={<span className="rounded-full bg-[hsl(6_42%_87%)] px-3 py-2 text-xs font-bold text-[hsl(6_62%_34%)]">{weak.length} Base-rated</span>} />
+    
+    <BannerAd adsEnabled={settings.adsEnabled} slotName="weakareas-top-banner" />
+
     {weak.length ? <div className="grid gap-3 lg:grid-cols-2">{weak.map((day) => <article key={day.day} className="rounded-2xl border border-[hsl(6_62%_50%_/_.2)] bg-card p-4"><div className="flex items-start gap-3"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[hsl(6_42%_87%)] font-display text-lg text-[hsl(6_62%_34%)]">{day.day}</div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className={`rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${subjectColor[day.subject]}`}>{subjectShort[day.subject]}</span><span className="font-mono text-[10px] text-muted-foreground">{day.date}</span></div><h2 className="mt-2 font-semibold">{day.chapter}</h2><p className="mt-1 text-sm text-muted-foreground">{day.target}</p></div><button data-testid={`button-open-weak-${day.day}`} onClick={() => setLocation(`/journey/day/${day.day}`)} className="rounded-lg p-2 text-muted-foreground hover:bg-muted focus-ring"><ChevronRight className="h-4 w-4" /></button></div><div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-3"><button data-testid={`button-revision-one-${day.day}`} onClick={() => updateDay(day.day, { revision1: !day.revision1 })} className={`rounded-lg border px-3 py-2 text-xs font-bold transition focus-ring ${day.revision1 ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-muted'}`}>{day.revision1 ? <Check className="mr-1 inline h-3 w-3" /> : null}Revision 1</button><button data-testid={`button-revision-two-${day.day}`} onClick={() => updateDay(day.day, { revision2: !day.revision2 })} className={`rounded-lg border px-3 py-2 text-xs font-bold transition focus-ring ${day.revision2 ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-muted'}`}>{day.revision2 ? <Check className="mr-1 inline h-3 w-3" /> : null}Revision 2</button><span className="ml-auto self-center text-[10px] text-muted-foreground">{day.revision1 && day.revision2 ? 'Ready to re-rate' : 'Keep revisiting'}</span></div></article>)}</div> : <EmptyState icon={Zap} title="No data yet in weak areas" copy="Rate a studied topic as Base when it needs urgent re-revision. Honest ratings make this page useful." />}
     
-    <BannerAd adsEnabled={settings.adsEnabled} />
+    <InContentAd adsEnabled={settings.adsEnabled} slotName="weakareas-mid-content" />
+    <MobileAd adsEnabled={settings.adsEnabled} slotName="weakareas-bottom-mobile" />
   </>;
 }
 
@@ -648,6 +716,9 @@ function Analytics() {
   const streak = getStreak(days);
   return <>
     <PageTitle eyebrow="Evidence, not vibes" title="Analytics." copy="Real completion, performance, streak, and monthly data from your saved check-offs." />
+    
+    <BannerAd adsEnabled={settings.adsEnabled} slotName="analytics-top-banner" />
+
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Metric label="Completion" value={`${Math.round(complete / .9)}%`} note={`${complete}/90 days complete`} icon={Check} accent /><Metric label="Rated" value={rated.length ? `${rated.length}` : 'No data yet'} note="topics with a performance rating" icon={BarChart3} /><Metric label="Streak" value={streak ? `${streak}` : 'No data yet'} note="consecutive completed days" icon={Flame} /><Metric label="Peak topics" value={ratings.Peak ? `${ratings.Peak}` : 'No data yet'} note="full mastery & exam readiness" icon={Trophy} /></div>
     
     <div className="mt-5 grid gap-5 lg:grid-cols-[1.1fr_.9fr]">
@@ -660,7 +731,8 @@ function Analytics() {
       </section>
     </div>
 
-    <InContentAd adsEnabled={settings.adsEnabled} />
+    <InContentAd adsEnabled={settings.adsEnabled} slotName="analytics-mid-content" />
+    <SidebarAd adsEnabled={settings.adsEnabled} slotName="analytics-bottom-sidebar" />
   </>;
 }
 
@@ -669,6 +741,9 @@ function Readiness() {
   const done = checklist.filter(Boolean).length;
   return <>
     <PageTitle eyebrow="The final audit" title="Exam readiness." copy="The source blueprint ends with four checks. Use this page when the daily work turns into readiness." action={<span className="font-mono text-sm">{done}/4 checked</span>} />
+    
+    <BannerAd adsEnabled={settings.adsEnabled} slotName="readiness-top-banner" />
+
     <section className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
       <div className="rounded-2xl border border-card-border bg-card p-5 sm:p-7">
         <div className="mb-6 flex items-center justify-between"><div><p className="font-mono text-[10px] uppercase tracking-[.16em] text-muted-foreground">Final exam readiness checklist</p><h2 className="mt-1 font-display text-3xl">{done === 4 ? 'Ready to walk in.' : 'Keep closing the loop.'}</h2></div><div className="grid h-14 w-14 place-items-center rounded-full border-4 border-primary font-display text-lg">{done}/4</div></div>
@@ -682,7 +757,8 @@ function Readiness() {
       </aside>
     </section>
 
-    <BannerAd adsEnabled={settings.adsEnabled} />
+    <InContentAd adsEnabled={settings.adsEnabled} slotName="readiness-bottom-content" />
+    <MobileAd adsEnabled={settings.adsEnabled} slotName="readiness-bottom-mobile" />
   </>;
 }
 
@@ -699,21 +775,29 @@ function DayDetail() {
   const markComplete = () => updateDay(day.day, { notes, microScribe, status: day.status === 'complete' ? 'in-progress' : 'complete' });
   return <>
     <button data-testid="button-back-from-day" onClick={() => setLocation('/journey')} className="mb-6 inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground focus-ring"><ChevronLeft className="h-4 w-4" />Back to journey</button>
+    
+    <BannerAd adsEnabled={settings.adsEnabled} slotName="daydetail-top-banner" />
+
     <div className="grid gap-5 lg:grid-cols-[1.25fr_.75fr]">
       <section className="rounded-2xl border border-card-border bg-card p-5 sm:p-8">
         <div className="flex flex-wrap items-center gap-2"><span className="rounded-md bg-primary px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-primary-foreground">Day {day.day}</span><span className="font-mono text-xs text-muted-foreground">{day.date} · {day.month}</span><StatusPill status={day.status} /></div>
         <h1 className="mt-6 font-display text-4xl leading-tight sm:text-5xl">{day.chapter}</h1>
         <div className="mt-5 rounded-xl bg-secondary/60 p-4"><p className="font-mono text-[10px] uppercase tracking-[.16em] text-muted-foreground">Target & action plan</p><p className="mt-2 text-base leading-relaxed">{day.target}</p></div>
         <div className="mt-7"><p className="mb-3 font-mono text-[10px] uppercase tracking-[.16em] text-muted-foreground">How did it land?</p><div className="grid gap-2 sm:grid-cols-3">{(['Base', 'Mid', 'Peak'] as Rating[]).map((rating) => <button key={rating} data-testid={`button-rating-${rating.toLowerCase()}`} onClick={() => updateDay(day.day, { rating, status: day.status === 'not-started' ? 'in-progress' : day.status })} className={`rounded-xl border p-3 text-left transition focus-ring ${day.rating === rating ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-muted'}`}><div className="flex items-center justify-between"><span className="font-bold">{rating}</span>{day.rating === rating && <Check className="h-4 w-4" />}</div><p className={`mt-1 text-xs leading-relaxed ${day.rating === rating ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>{ratingDefinitions[rating]}</p></button>)}</div></div>
+        
+        <InContentAd adsEnabled={settings.adsEnabled} slotName="daydetail-mid-content" />
+
         <div className="mt-7 grid gap-4 sm:grid-cols-2"><label className="text-xs font-bold text-muted-foreground">Notes<textarea data-testid="textarea-day-notes" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="What clicked? What needs another pass?" className="mt-2 min-h-32 w-full resize-y rounded-xl border border-input bg-background p-3 text-sm font-normal text-foreground outline-none focus:ring-2 focus:ring-ring/20" /></label><label className="text-xs font-bold text-muted-foreground">Micro-scribe<textarea data-testid="textarea-day-microscribe" value={microScribe} onChange={(event) => setMicroScribe(event.target.value)} placeholder="Condense the key idea into a one-page cue." className="mt-2 min-h-32 w-full resize-y rounded-xl border border-input bg-background p-3 text-sm font-normal text-foreground outline-none focus:ring-2 focus:ring-ring/20" /></label></div>
         <div className="mt-5 flex flex-wrap gap-2"><button data-testid="button-save-day" onClick={save} className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-bold hover:bg-muted focus-ring"><Save className="h-4 w-4" />Save notes</button><button data-testid="button-complete-day" onClick={markComplete} className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground hover:opacity-90 focus-ring"><Check className="h-4 w-4" />{day.status === 'complete' ? 'Move back to in progress' : 'Mark complete'}</button><button data-testid="button-reset-day" onClick={() => { if (window.confirm('Reset this day? Your notes and rating will be cleared.')) { resetDay(day.day); setNotes(''); setMicroScribe(''); } }} className="ml-auto inline-flex items-center gap-2 rounded-xl px-3 py-3 text-xs font-bold text-destructive hover:bg-destructive/10 focus-ring"><RotateCcw className="h-3.5 w-3.5" />Reset</button></div>
       </section>
       <aside className="space-y-5">
         <section className="rounded-2xl border border-border bg-card p-5"><p className="font-mono text-[10px] uppercase tracking-[.16em] text-muted-foreground">Revision tracker</p><h2 className="mt-1 font-display text-2xl">Return to it.</h2><p className="mt-2 text-sm leading-relaxed text-muted-foreground">Especially important when this topic is Base-rated.</p><div className="mt-5 space-y-2"><button data-testid="button-detail-revision-1" onClick={() => updateDay(day.day, { revision1: !day.revision1 })} className={`flex w-full items-center justify-between rounded-xl border p-3 text-sm font-bold ${day.revision1 ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-muted'}`}>Revision 1 {day.revision1 && <Check className="h-4 w-4" />}</button><button data-testid="button-detail-revision-2" onClick={() => updateDay(day.day, { revision2: !day.revision2 })} className={`flex w-full items-center justify-between rounded-xl border p-3 text-sm font-bold ${day.revision2 ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-muted'}`}>Revision 2 {day.revision2 && <Check className="h-4 w-4" />}</button></div></section>
-        <SidebarAd adsEnabled={settings.adsEnabled} />
+        <SidebarAd adsEnabled={settings.adsEnabled} slotName="daydetail-side-banner" />
         <section className="rounded-2xl border border-border bg-secondary/50 p-5"><p className="font-mono text-[10px] uppercase tracking-[.16em] text-muted-foreground">Source terminology</p><div className="mt-4 space-y-3">{(['Base', 'Mid', 'Peak'] as Rating[]).map((rating) => <div key={rating} className="flex gap-2"><RatingPill rating={rating} /><p className="text-xs leading-relaxed text-muted-foreground">{ratingDefinitions[rating]}</p></div>)}</div></section>
       </aside>
     </div>
+
+    <MobileAd adsEnabled={settings.adsEnabled} slotName="daydetail-bottom-mobile" />
   </>;
 }
 
@@ -723,11 +807,25 @@ function SettingsPage() {
   const [startDate, setStartDate] = useState(settings.startDate);
   const [adsEnabled, setAdsEnabled] = useState(settings.adsEnabled);
   const [saved, setSaved] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const saveSettings = () => { 
     updateSettings({ name: name.trim(), startDate, adsEnabled }); 
     setSaved(true); 
     window.setTimeout(() => setSaved(false), 1800); 
+  };
+
+  const handleResetConfirm = async () => {
+    setIsResetting(true);
+    try {
+      await resetAll();
+      setShowConfirm(false);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   const download = (content: string, filename: string, type: string) => { const url = URL.createObjectURL(new Blob([content], { type })); const anchor = document.createElement('a'); anchor.href = url; anchor.download = filename; anchor.click(); URL.revokeObjectURL(url); };
@@ -738,6 +836,8 @@ function SettingsPage() {
   return <>
     <PageTitle eyebrow="Make it yours" title="Settings & Preferences." copy="Configure your study start date, theme, monetization preference, and account sync." />
     
+    <BannerAd adsEnabled={settings.adsEnabled} slotName="settings-top-banner" />
+
     <div className="grid gap-5 lg:grid-cols-[1fr_.8fr]">
       <section className="rounded-2xl border border-card-border bg-card p-5 sm:p-7">
         <div className="flex items-start gap-3">
@@ -775,15 +875,40 @@ function SettingsPage() {
       </section>
     </div>
 
-    <section className="mt-5 rounded-2xl border border-border bg-card p-5 sm:p-7">
-      <div className="flex items-start gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-muted"><Download className="h-5 w-5" /></div><div><h2 className="font-display text-2xl">Progress portability</h2><p className="mt-1 text-sm text-muted-foreground">Download your local progress or restore a validated JSON export.</p></div></div>
-      <div className="mt-5 flex flex-wrap gap-2"><button data-testid="button-export-json" onClick={exportJson} className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-bold hover:bg-muted focus-ring"><Download className="h-4 w-4" />Export JSON</button><button data-testid="button-export-csv" onClick={exportCsv} className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-bold hover:bg-muted focus-ring"><Download className="h-4 w-4" />Export CSV</button><label data-testid="button-import-json" className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-secondary px-4 py-3 text-sm font-bold text-secondary-foreground hover:opacity-90 focus-within:ring-2 focus-within:ring-ring/20"><Upload className="h-4 w-4" />Import JSON<input type="file" accept="application/json,.json" onChange={importFile} className="sr-only" /></label></div>
-    </section>
-
     <section className="mt-5 rounded-2xl border border-destructive/20 bg-[hsl(6_42%_87%_/_.4)] p-5 sm:p-7">
       <div className="flex items-start gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-[hsl(6_62%_50%)] text-[hsl(44_38%_95%)]"><Trash2 className="h-5 w-5" /></div><div><h2 className="font-display text-2xl">Reset all progress</h2><p className="mt-1 text-sm text-muted-foreground">This clears every status, rating, note, revision, and readiness check from this browser and cloud account.</p></div></div>
-      <button data-testid="button-reset-all" onClick={() => { if (window.confirm('Reset the entire 90-day journey? This cannot be undone.')) resetAll(); }} className="mt-5 inline-flex items-center gap-2 rounded-xl border border-destructive/30 px-4 py-3 text-sm font-bold text-destructive hover:bg-destructive/10 focus-ring"><Trash2 className="h-4 w-4" />Reset everything</button>
+      <button data-testid="button-reset-all" onClick={() => setShowConfirm(true)} className="mt-5 inline-flex items-center gap-2 rounded-xl border border-destructive/30 px-4 py-3 text-sm font-bold text-destructive hover:bg-destructive/10 focus-ring"><Trash2 className="h-4 w-4" />Reset everything</button>
     </section>
+
+    {showConfirm && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-4">
+          <div className="flex items-center gap-3 text-destructive">
+            <AlertTriangle className="h-6 w-6 shrink-0" />
+            <h3 className="font-display text-xl">Confirm Complete Reset</h3>
+          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Are you sure you want to reset all 90 days of study progress, ratings, micro-scribes, and checklist items? <strong className="text-foreground">This action cannot be undone.</strong>
+          </p>
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              onClick={() => setShowConfirm(false)}
+              disabled={isResetting}
+              className="rounded-xl border border-border px-4 py-2.5 text-sm font-bold hover:bg-muted transition disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleResetConfirm}
+              disabled={isResetting}
+              className="rounded-xl bg-destructive px-4 py-2.5 text-sm font-bold text-destructive-foreground hover:opacity-90 transition shadow-md disabled:opacity-50 flex items-center gap-2"
+            >
+              {isResetting ? 'Resetting...' : 'Yes, Reset Everything'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   </>;
 }
 
@@ -802,7 +927,7 @@ function Router() {
       <div className="grid min-h-screen place-items-center bg-background text-foreground">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-sm font-medium text-muted-foreground">Loading Class 9 Blueprint...</p>
+          <p className="text-sm font-medium text-muted-foreground">Loading Final Comeback...</p>
         </div>
       </div>
     );

@@ -22,7 +22,7 @@ export const BacklogView: React.FC<BacklogProps> = ({ days, startDate }) => {
 
   return (
     <div className="space-y-6">
-      <BannerAd adsEnabled={true} />
+      <BannerAd adsEnabled={true} slotName="backlog-top" />
 
       <div className="flex flex-col gap-2">
         <p className="font-mono text-[10px] uppercase tracking-[.2em] text-muted-foreground">Unfinished review queue</p>
@@ -30,7 +30,7 @@ export const BacklogView: React.FC<BacklogProps> = ({ days, startDate }) => {
         <p className="text-sm text-muted-foreground">Missed calendar days accumulate here as actionable study days without deleting any content.</p>
       </div>
 
-      <InContentAd adsEnabled={true} />
+      <InContentAd adsEnabled={true} slotName="backlog-mid" />
 
       {backlogDays.length > 0 ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -75,8 +75,8 @@ export const BacklogView: React.FC<BacklogProps> = ({ days, startDate }) => {
         </div>
       )}
 
-      <SidebarAd adsEnabled={true} />
-      <MobileAd adsEnabled={true} />
+      <SidebarAd adsEnabled={true} slotName="backlog-bottom-sidebar" />
+      <MobileAd adsEnabled={true} slotName="backlog-bottom-mobile" />
     </div>
   );
 };

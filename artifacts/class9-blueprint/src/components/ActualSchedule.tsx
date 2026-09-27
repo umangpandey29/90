@@ -27,7 +27,7 @@ export const ActualSchedule: React.FC<ActualScheduleProps> = ({ days, startDate 
 
   return (
     <div className="space-y-6">
-      <BannerAd adsEnabled={true} />
+      <BannerAd adsEnabled={true} slotName="schedule-top" />
 
       <div className="flex flex-col gap-2">
         <p className="font-mono text-[10px] uppercase tracking-[.2em] text-muted-foreground">Chronological log</p>
@@ -35,7 +35,7 @@ export const ActualSchedule: React.FC<ActualScheduleProps> = ({ days, startDate 
         <p className="text-sm text-muted-foreground">A complete timeline tracking study days, assigned dates, actual completion, performance, and revision status.</p>
       </div>
 
-      <InContentAd adsEnabled={true} />
+      <InContentAd adsEnabled={true} slotName="schedule-mid" />
 
       <div className="rounded-2xl border border-card-border bg-card p-5 sm:p-6 overflow-x-auto">
         <table className="w-full text-left text-sm">
@@ -87,8 +87,8 @@ export const ActualSchedule: React.FC<ActualScheduleProps> = ({ days, startDate 
         </table>
       </div>
 
-      <SidebarAd adsEnabled={true} />
-      <MobileAd adsEnabled={true} />
+      <SidebarAd adsEnabled={true} slotName="schedule-bottom-sidebar" />
+      <MobileAd adsEnabled={true} slotName="schedule-bottom-mobile" />
     </div>
   );
 };
