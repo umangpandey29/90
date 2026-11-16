@@ -4,12 +4,13 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- `npm run dev` — run the class9-blueprint web app (port 3000, `PORT` overrides)
+- `npm run build` — production build to `artifacts/class9-blueprint/dist/public`
+- `npm run typecheck` — typecheck the web app
+- Required env: none for the web app (Firebase config is committed); the unused
+  `artifacts/api-server` package still expects `DATABASE_URL`
+- Note: the pnpm workspace was flattened into the root `package.json` (bun lockfile),
+  so the old `pnpm --filter @workspace/...` commands no longer apply
 
 ## Stack
 

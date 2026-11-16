@@ -12,10 +12,10 @@ paths = [ "/" ]
 localPort = 19090
 
 [services.development]
-run = "pnpm --filter @workspace/class9-blueprint run dev"
+run = "npm run dev"
 
 [services.production]
-build = [ "pnpm", "--filter", "@workspace/class9-blueprint", "run", "build" ]
+build = [ "npm", "run", "build" ]
 serve = "static"
 publicDir = "artifacts/class9-blueprint/dist/public"
 
